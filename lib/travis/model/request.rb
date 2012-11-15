@@ -40,4 +40,36 @@ class Request < ActiveRecord::Base
   def config_url
     "https://api.github.com/repos/#{repository.slug}/contents/.travis.yml?ref=#{commit.commit}"
   end
+
+  def save!(*)
+    super
+  rescue ActiveRecord::RecordInvalid => e
+    Travis.logger.error "Build:#{id} failed because of the following errors: #{collect_errors(self).join(', ')}"
+    raise
+  end
+
+  private
+
+  def collect_errors(object)
+    errors = object.errors
+    messages = errors.to_a.map do |message|
+      str = object.class.name.dup
+      str << ":#{object.id}" if object.respond_to?(:id) && object.id
+      str << ": #{message}"
+      str
+    end
+
+    errors.keys.each do |key|
+      value = object.send(key)
+      value = [value] unless value.respond_to?(:each)
+
+      value.each do |v|
+        next unless v.respond_to?(:errors)
+
+        messages += collect_errors(v)
+      end
+    end
+
+    messages
+  end
 end
