@@ -34,7 +34,7 @@ module Travis
             end
 
             def owner
-              @owner ||= Travis.run_service(:github_find_or_create_owner, user, data['owner'])
+              @owner ||= Travis.run_service(:github_find_or_create_owner, user, type: data['owner']['type'], login: data['owner']['login'])
             end
 
             def permission
