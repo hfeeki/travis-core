@@ -11,7 +11,7 @@ module Travis
         private
 
           def find
-            ::User.where(:login => params[:login]).first
+            ::User.where(:login => params[:login]).first # TODO should really use the github id
           end
 
           def create

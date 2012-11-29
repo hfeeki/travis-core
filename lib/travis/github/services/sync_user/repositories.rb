@@ -32,7 +32,7 @@ module Travis
 
           def run
             with_github do
-              { :synced => create_or_update, :removed => remove }
+              { synced: create_or_update, removed: remove }
             end
           end
           instrument :run
@@ -87,7 +87,7 @@ module Travis
             def fetch
               resources.map { |resource| fetch_resource(resource) }.map(&:to_a).flatten.compact
             end
-            instrument :fetch, :level => :debug
+            instrument :fetch, level: :debug
 
             def fetch_resource(resource)
               GH[resource] # TODO should be: ?type=#{self.class.type} but GitHub doesn't work as documented
@@ -98,7 +98,7 @@ module Travis
             def with_github(&block)
               # TODO in_parallel should return the block's result in a future version
               result = nil
-              GH.with(:token => user.github_oauth_token) do
+              GH.with(token: user.github_oauth_token) do
                 # GH.in_parallel do
                   result = yield
                 # end

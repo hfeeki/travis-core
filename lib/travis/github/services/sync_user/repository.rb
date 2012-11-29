@@ -5,7 +5,7 @@ module Travis
         class Repository
           class << self
             def unpermit_all(user, repositories)
-              user.permissions.where(:repository_id => repositories.map(&:id)).delete_all unless repositories.empty?
+              user.permissions.where(repository_id: repositories.map(&:id)).delete_all unless repositories.empty?
             end
           end
 
@@ -17,7 +17,7 @@ module Travis
           end
 
           def run
-            @repo = find || create
+            find_or_create
             update
             if permission
               sync_permissions
@@ -29,17 +29,16 @@ module Travis
 
           private
 
-            def find
-              ::Repository.where(:owner_name => owner_name, :name => name).first
+            def find_or_create
+              @repo ||= Travis.run_service(:github_find_or_create_repo, user, owner: owner, owner_name: owner.login, name: data['name'])
             end
 
-            def create
-              ::Repository.create!(:owner_name => owner_name, :name => name)
+            def owner
+              @owner ||= Travis.run_service(:github_find_or_create_owner, user, data['owner'])
             end
-            # instrument :create, :level => :debug
 
             def permission
-              @permission ||= user.permissions.where(:repository_id => repo.id).first
+              @permission ||= user.permissions.where(repository_id: repo.id).first
             end
 
             def sync_permissions
@@ -56,25 +55,17 @@ module Travis
 
             def permit
               user.permissions.create!({
-                :user  => user,
-                :repository => repo
+                user: user,
+                repository: repo
               }.merge(permission_data))
             end
-            # instrument :permit, :level => :debug
+            # instrument :permit, level: :debug
 
             def update
-              repo.update_attributes!(:private => data['private'])
+              repo.update_attributes!(private: data['private'])
             rescue ActiveRecord::RecordInvalid
               # ignore for now. this seems to happen when multiple syncs (i.e. user sign
               # in requests are running in parallel?
-            end
-
-            def owner_name
-              data['owner']['login']
-            end
-
-            def name
-              data['name']
             end
 
             def permission_data

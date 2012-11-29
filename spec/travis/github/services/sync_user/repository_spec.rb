@@ -7,7 +7,7 @@ describe Travis::Github::Services::SyncUser::Repository do
   let(:run)     { lambda { described_class.new(user, repo).run } }
 
   describe 'find or create repository' do
-    let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'permissions' => { 'admin' => false, 'push' => false, 'pull' => true } } }
+    let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'permissions' => { 'admin' => false, 'push' => false, 'pull' => true } } }
 
     it 'creates a new repository per record if not yet present' do
       run.call
@@ -15,36 +15,36 @@ describe Travis::Github::Services::SyncUser::Repository do
     end
 
     it 'does not create a new repository' do
-      Repository.create!(:owner_name => 'sven', :name => 'minimal')
+      Repository.create!(owner_name: 'sven', name: 'minimal')
       run.should_not change(Repository, :count)
     end
   end
 
   describe 'a public repository' do
     describe 'only pull access' do
-      let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'permissions' => { 'admin' => false, 'push' => false, 'pull' => true } } }
+      let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'permissions' => { 'admin' => false, 'push' => false, 'pull' => true } } }
 
       it "doesn't create a new permission for the user/repo" do
         run.should_not change(Permission, :count)
       end
 
       it "destroys an existing permission" do
-        repo = Repository.create(:owner_name => 'sven', :name => 'minimal')
-        repo.permissions.create(:user => user, :push => true, :pull => true)
+        repo = Repository.create(owner_name: 'sven', name: 'minimal')
+        repo.permissions.create(user: user, push: true, pull: true)
         run.should change(Permission, :count).by(-1)
       end
     end
 
     describe 'push and pull access' do
-      let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'permissions' => { 'admin' => false, 'push' => true, 'pull' => true } } }
+      let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'permissions' => { 'admin' => false, 'push' => true, 'pull' => true } } }
 
       it "creates a new permission for the user/repo" do
         run.should change(Permission, :count).by(1)
       end
 
       it "updates an existing permission" do
-        repo = Repository.create(:owner_name => 'sven', :name => 'minimal')
-        repo.permissions.create(:user => user, :admin => true, :push => true, :pull => true)
+        repo = Repository.create(owner_name: 'sven', name: 'minimal')
+        repo.permissions.create(user: user, admin: true, push: true, pull: true)
 
         run.should_not change(Permission, :count)
 
@@ -56,15 +56,15 @@ describe Travis::Github::Services::SyncUser::Repository do
     end
 
     describe 'admin, push and pull access' do
-      let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'permissions' => { 'admin' => true, 'push' => true, 'pull' => true } } }
+      let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'permissions' => { 'admin' => true, 'push' => true, 'pull' => true } } }
 
       it "creates a new permission for the user/repo" do
         run.should change(Permission, :count).by(1)
       end
 
       it "updates an existing permission" do
-        repo = Repository.create(:owner_name => 'sven', :name => 'minimal')
-        repo.permissions.create(:user => user, :push => true, :pull => true)
+        repo = Repository.create(owner_name: 'sven', name: 'minimal')
+        repo.permissions.create(user: user, push: true, pull: true)
 
         run.should_not change(Permission, :count)
 
@@ -78,15 +78,15 @@ describe Travis::Github::Services::SyncUser::Repository do
 
   describe 'a private repository' do
     describe 'only pull access' do
-      let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'private' => true, 'permissions' => { 'admin' => false, 'push' => false, 'pull' => true } } }
+      let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'private' => true, 'permissions' => { 'admin' => false, 'push' => false, 'pull' => true } } }
 
       it "creates a new permission for the user/repo" do
         run.should change(Permission, :count)
       end
 
       it "updates an existing permission" do
-        repo = Repository.create(:owner_name => 'sven', :name => 'minimal')
-        repo.permissions.create(:user => user, :admin => true, :push => true, :pull => true)
+        repo = Repository.create(owner_name: 'sven', name: 'minimal')
+        repo.permissions.create(user: user, admin: true, push: true, pull: true)
 
         run.should_not change(Permission, :count)
 
@@ -98,15 +98,15 @@ describe Travis::Github::Services::SyncUser::Repository do
     end
 
     describe 'push and pull access' do
-      let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'private' => true, 'permissions' => { 'admin' => false, 'push' => true, 'pull' => true } } }
+      let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'private' => true, 'permissions' => { 'admin' => false, 'push' => true, 'pull' => true } } }
 
       it "creates a new permission for the user/repo" do
         run.should change(Permission, :count).by(1)
       end
 
       it "updates an existing permission" do
-        repo = Repository.create(:owner_name => 'sven', :name => 'minimal')
-        repo.permissions.create(:user => user, :admin => true, :push => true, :pull => true)
+        repo = Repository.create(owner_name: 'sven', name: 'minimal')
+        repo.permissions.create(user: user, admin: true, push: true, pull: true)
 
         run.should_not change(Permission, :count)
 
@@ -118,15 +118,15 @@ describe Travis::Github::Services::SyncUser::Repository do
     end
 
     describe 'admin, push and pull access' do
-      let(:repo) { { 'name' => 'minimal', 'owner' => { 'login' => 'sven' }, 'private' => true, 'permissions' => { 'admin' => true, 'push' => true, 'pull' => true } } }
+      let(:repo) { { 'name' => 'minimal', 'owner' => { 'type' => 'User', 'login' => 'sven' }, 'private' => true, 'permissions' => { 'admin' => true, 'push' => true, 'pull' => true } } }
 
       it "creates a new permission for the user/repo" do
         run.should change(Permission, :count).by(1)
       end
 
       it "updates an existing permission" do
-        repo = Repository.create(:owner_name => 'sven', :name => 'minimal')
-        repo.permissions.create(:user => user, :push => true, :pull => true)
+        repo = Repository.create(owner_name: 'sven', name: 'minimal')
+        repo.permissions.create(user: user, push: true, pull: true)
 
         run.should_not change(Permission, :count)
 

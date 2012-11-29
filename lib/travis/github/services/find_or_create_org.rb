@@ -13,7 +13,7 @@ module Travis
         private
 
           def find
-            ::Organization.where(:login => params[:login]).first
+            ::Organization.where(:login => params[:login]).first # TODO should really use the github id
           end
 
           def create

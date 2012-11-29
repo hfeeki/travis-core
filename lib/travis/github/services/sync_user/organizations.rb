@@ -7,7 +7,7 @@ module Travis
         class Organizations
           class << self
             def cancel_memberships(user, orgs)
-              user.memberships.where(:organization_id => orgs.map(&:id)).delete_all
+              user.memberships.where(organization_id: orgs.map(&:id)).delete_all
             end
           end
 
@@ -21,7 +21,7 @@ module Travis
 
           def run
             with_github do
-              { :synced => create_or_update, :removed => remove }
+              { synced: create_or_update, removed: remove }
             end
           end
           instrument :run
@@ -30,8 +30,11 @@ module Travis
 
             def create_or_update
               fetch.map do |data|
+                # TODO use the :github_find_or_create_org service?
+                # would need to changed to not look up stuff from github if all attributes are present
+                # but it might still be worthwile to centralize this kind of stuff
                 org = Organization.find_or_create_by_github_id(data['id'])
-                org.update_attributes!(:name => data['name'], :login => data['login'])
+                org.update_attributes!(name: data['name'], login: data['login'])
                 user.organizations << org unless user.organizations.include?(org)
                 org
               end
@@ -46,7 +49,7 @@ module Travis
             def fetch
               @data ||= GH['user/orgs'].to_a
             end
-            instrument :fetch, :level => :debug
+            instrument :fetch, level: :debug
 
             def github_ids
               @github_ids ||= data.map { |org| org['id'] }
@@ -55,7 +58,7 @@ module Travis
             def with_github(&block)
               # TODO in_parallel should return the block's result in a future version
               result = nil
-              GH.with(:token => user.github_oauth_token) do
+              GH.with(token: user.github_oauth_token) do
                 # GH.in_parallel do
                   result = yield
                 # end
