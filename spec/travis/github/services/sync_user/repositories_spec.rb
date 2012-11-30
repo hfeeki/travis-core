@@ -12,6 +12,7 @@ describe Travis::Github::Services::SyncUser::Repositories do
   let(:user) { stub_user(:organizations => [org], :github_oauth_token => 'token', :repositories => [public_repo, removed_repo]) }
   let(:org)  { stub('org', :login => 'the-org') }
   let(:sync) { described_class.new(user) }
+  let(:gh)   { stub('gh') }
 
   let(:repos) { [
     { 'name' => 'public',  'owner' => { 'login' => 'sven' }, 'permissions' => { 'admin' => true }, 'private' => false },

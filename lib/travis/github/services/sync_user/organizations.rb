@@ -13,16 +13,15 @@ module Travis
 
           extend Travis::Instrumentation
 
-          attr_reader :user, :data
+          attr_reader :user, :gh, :data
 
-          def initialize(user)
+          def initialize(user, gh = GH)
             @user = user
+            @gh = gh
           end
 
           def run
-            with_github do
-              { synced: create_or_update, removed: remove }
-            end
+            { synced: create_or_update, removed: remove }
           end
           instrument :run
 
@@ -47,23 +46,12 @@ module Travis
             end
 
             def fetch
-              @data ||= GH['user/orgs'].to_a
+              @data ||= gh['user/orgs'].to_a
             end
             instrument :fetch, level: :debug
 
             def github_ids
               @github_ids ||= data.map { |org| org['id'] }
-            end
-
-            def with_github(&block)
-              # TODO in_parallel should return the block's result in a future version
-              result = nil
-              GH.with(token: user.github_oauth_token) do
-                # GH.in_parallel do
-                  result = yield
-                # end
-              end
-              result
             end
 
             class Instrument < Notification::Instrument

@@ -10,8 +10,10 @@ module Travis
 
         def run
           syncing do
-            Organizations.new(user).run
-            Repositories.new(user).run
+            with_github do |gh|
+              Organizations.new(user, gh).run
+              Repositories.new(user, gh).run
+            end
           end
         end
 
@@ -21,6 +23,26 @@ module Travis
         end
 
         private
+
+          def with_github(&block)
+            gh = GH::Stack.new do
+              use GH::Instrumentation
+              use GH::Parallel
+              use GH::Pagination
+              use GH::LinkFollower
+              use GH::MergeCommit
+              use GH::LazyLoader
+              use GH::Normalizer
+              use GH::CustomLimit
+              # use GH::Remote
+              use GH::Cache
+            end
+            gh = gh.build(token: user.github_oauth_token)
+            yield gh
+          end
+
+          def gh
+          end
 
           def syncing
             user.update_column(:is_syncing, true)

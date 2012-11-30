@@ -23,17 +23,16 @@ module Travis
             end
           end
 
-          attr_reader :user, :resources, :data
+          attr_reader :user, :gh, :resources, :data
 
-          def initialize(user)
+          def initialize(user, gh = GH)
             @user = user
+            @gh = gh
             @resources = ['user/repos'] + user.organizations.map { |org| "orgs/#{org.login}/repos" }
           end
 
           def run
-            with_github do
-              { synced: create_or_update, removed: remove }
-            end
+            { synced: create_or_update, removed: remove }
           end
           instrument :run
 
@@ -90,20 +89,9 @@ module Travis
             instrument :fetch, level: :debug
 
             def fetch_resource(resource)
-              GH[resource] # TODO should be: ?type=#{self.class.type} but GitHub doesn't work as documented
+              gh[resource] # TODO should be: ?type=#{self.class.type} but GitHub doesn't work as documented
             rescue GH::Error => e
               log_exception(e)
-            end
-
-            def with_github(&block)
-              # TODO in_parallel should return the block's result in a future version
-              result = nil
-              GH.with(token: user.github_oauth_token) do
-                # GH.in_parallel do
-                  result = yield
-                # end
-              end
-              result
             end
 
             class Instrument < Notification::Instrument
